@@ -6,3 +6,9 @@ export type User = {
 };
 
 export type UserToPut = Omit<User, "id">;
+
+export type TypicalMessage = {
+  message: string;
+  data?: string | Record<string, unknown> | Array<unknown>;
+  code?: number;
+};

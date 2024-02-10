@@ -2,7 +2,9 @@ import "dotenv/config";
 import http from "node:http";
 import { users } from "./bd";
 import { baseURL } from "./constants";
+import { TypicalMessage } from "./types";
 import {
+  checkIsCorrectId,
   checkIsCorrectUser,
   genereateId,
   getId,
@@ -12,8 +14,7 @@ import {
 
 const server = http.createServer(async (request, response) => {
   if (!request.url?.startsWith(baseURL)) {
-    response.writeHead(404);
-    sendMessage(response, { message: "URL not found" });
+    sendMessage(response, { message: "URL not found", code: 404 });
 
     return;
   }
@@ -23,40 +24,39 @@ const server = http.createServer(async (request, response) => {
 
   switch (request.method) {
     case "POST": {
-      const result = await new Promise<Record<string, unknown>>(
-        (resolve, reject) => {
-          try {
-            let userData = "";
+      const result = await new Promise<TypicalMessage>((resolve, reject) => {
+        try {
+          let userData = "";
 
-            request.on("data", (chunk: string) => {
-              userData += chunk;
-            });
+          request.on("data", (chunk: string) => {
+            userData += chunk;
+          });
 
-            request.on("end", () => {
-              const newId = genereateId();
-              const newUser = { ...parseJSON(userData), id: newId };
-              const IsCorrectUser = checkIsCorrectUser(newUser);
+          request.on("end", () => {
+            const newId = genereateId();
+            const newUser = { ...parseJSON(userData), id: newId };
+            const IsCorrectUser = checkIsCorrectUser(newUser);
 
-              if (IsCorrectUser) {
-                users[newId] = newUser;
+            if (IsCorrectUser) {
+              users[newId] = newUser;
 
-                resolve({
-                  message: "User added",
-                  user: newUser,
-                });
-              } else {
-                resolve({
-                  message: "Wrong format",
-                  description:
-                    "Correct format is: {username: string; age: number; hobbies?: Array<string>}",
-                });
-              }
-            });
-          } catch (e) {
-            reject({ message: "Operation failed" });
-          }
+              resolve({
+                message: "User added",
+                data: newUser,
+                code: 201,
+              });
+            } else {
+              resolve({
+                message: "Wrong format",
+                data: "Correct format is: {username: string; age: number; hobbies?: Array<string>}",
+                code: 400,
+              });
+            }
+          });
+        } catch (e) {
+          reject({ message: "Operation failed", code: 500 });
         }
-      );
+      });
 
       sendMessage(response, result);
       break;
@@ -64,14 +64,17 @@ const server = http.createServer(async (request, response) => {
 
     case "GET": {
       if (!id) {
-        sendMessage(response, Object.values(users));
+        sendMessage(response, {
+          message: "All users",
+          data: Object.values(users),
+        });
         return;
       }
 
       if (user) {
-        sendMessage(response, user);
+        sendMessage(response, { message: "User found", data: user });
       } else {
-        sendMessage(response, { message: "User not found" });
+        sendMessage(response, { message: "User not found", code: 400 });
       }
 
       break;
@@ -82,12 +85,30 @@ const server = http.createServer(async (request, response) => {
     }
 
     case "DELETE": {
-      if (user) {
-        delete users[id];
-        sendMessage(response, { message: `User ${id} was deleted` });
-      } else {
-        sendMessage(response, { message: "User not found" });
+      const isCorrectId = checkIsCorrectId(id);
+
+      if (!isCorrectId) {
+        sendMessage(response, {
+          message: "User not found",
+          data: "You provided ID in incorrect format",
+          code: 400,
+        });
+
+        return;
       }
+
+      if (!user) {
+        sendMessage(response, {
+          message: "User not found",
+          data: "Check if passed ID is correct",
+          code: 400,
+        });
+
+        return;
+      }
+
+      delete users[id];
+      sendMessage(response, { message: `User was deleted`, data: user });
 
       break;
     }

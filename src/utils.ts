@@ -1,7 +1,7 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { v4 } from "uuid";
+import { v4, validate } from "uuid";
 import { baseURL } from "./constants";
-import { User } from "./types";
+import { TypicalMessage, User } from "./types";
 
 export const genereateId = v4;
 
@@ -9,8 +9,11 @@ export const sendMessage = (
   response: ServerResponse<IncomingMessage> & {
     req: IncomingMessage;
   },
-  message: object
+  message: TypicalMessage
 ) => {
+  if (message.code) {
+    response.writeHead(message.code);
+  }
   response.end(JSON.stringify(message));
 };
 
@@ -54,4 +57,11 @@ export const parseJSON = (value: string) => {
   } catch {
     return null;
   }
+};
+
+export const checkIsCorrectId = (id: unknown) => {
+  if (typeof id !== "string") {
+    return false;
+  }
+  return validate(id);
 };
