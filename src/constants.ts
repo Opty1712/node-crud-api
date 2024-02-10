@@ -11,7 +11,7 @@ export const invalidID: TypicalMessage = {
 export const wrongID: TypicalMessage = {
   message: "User not found",
   data: "Check if passed ID is correct",
-  code: 400,
+  code: 404,
 };
 
 export const wrongFormatPUT: TypicalMessage = {
@@ -23,11 +23,6 @@ export const wrongFormatPUT: TypicalMessage = {
 export const wrongFormatPOST: TypicalMessage = {
   ...wrongFormatPUT,
   data: "Correct format is: {username: string; age: number; hobbies?: Array<string>}",
-};
-
-export const notFound: TypicalMessage = {
-  message: "User not found",
-  code: 400,
 };
 
 export const fail: TypicalMessage = { message: "Operation failed", code: 500 };

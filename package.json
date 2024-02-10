@@ -6,8 +6,8 @@
   },
   "scripts": {
     "start:dev": "cross-env NODE_ENV=development nodemon --exec ts-node src/index.ts",
-    "start:prod": "cross-env NODE_ENV=production ts-node src/index.ts",
-    "build": ""
+    "start:prod": "npm run build && node dist/index",
+    "build": "tsc --outDir dist src/index.ts"
   },
   "repository": {
     "type": "git",

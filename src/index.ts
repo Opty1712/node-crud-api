@@ -1,5 +1,5 @@
 import "dotenv/config";
-import http from "node:http";
+import { createServer } from "node:http";
 import { users } from "./bd";
 import {
   baseURL,
@@ -19,145 +19,150 @@ import {
   sendMessage,
 } from "./utils";
 
-const server = http.createServer(async (request, response) => {
+const server = createServer(async (request, response) => {
   const proceedMessage = (message: TypicalMessage) => {
     sendMessage(response, message);
   };
 
-  if (!request.url?.startsWith(baseURL)) {
-    proceedMessage(wrongURL);
+  try {
+    if (!request.url?.startsWith(baseURL)) {
+      proceedMessage(wrongURL);
 
-    return;
-  }
-
-  const id = getId(request.url);
-  const user = users[id];
-
-  switch (request.method) {
-    case "POST": {
-      const result = await new Promise<TypicalMessage>((resolve, reject) => {
-        try {
-          let userData = "";
-
-          request.on("data", (chunk: string) => {
-            userData += chunk;
-          });
-
-          request.on("end", () => {
-            const newId = genereateId();
-            const newUser = { ...parseJSON(userData), id: newId };
-            const IsCorrectUser = checkIsCorrectUser(newUser);
-
-            if (IsCorrectUser) {
-              users[newId] = newUser;
-
-              resolve({
-                message: "User added",
-                data: newUser,
-                code: 201,
-              });
-            } else {
-              resolve(wrongFormatPOST);
-            }
-          });
-        } catch {
-          reject(fail);
-        }
-      });
-
-      proceedMessage(result);
-      break;
+      return;
     }
 
-    case "GET": {
-      if (!id) {
-        proceedMessage({
-          message: "Existing users",
-          data: Object.values(users),
+    const id = getId(request.url);
+    const user = users[id];
+
+    switch (request.method) {
+      case "POST": {
+        const result = await new Promise<TypicalMessage>((resolve, reject) => {
+          try {
+            let userData = "";
+
+            request.on("data", (chunk: string) => {
+              userData += chunk;
+            });
+
+            request.on("end", () => {
+              const newId = genereateId();
+              const newUser = { ...parseJSON(userData), id: newId };
+              const IsCorrectUser = checkIsCorrectUser(newUser);
+
+              if (IsCorrectUser) {
+                users[newId] = newUser;
+
+                resolve({
+                  message: "User added",
+                  data: newUser,
+                  code: 201,
+                });
+              } else {
+                resolve(wrongFormatPOST);
+              }
+            });
+          } catch {
+            reject(fail);
+          }
         });
 
-        return;
+        proceedMessage(result);
+        break;
       }
 
-      const isCorrectId = checkIsCorrectId(id);
-      const typicalErrorMessage = getTypicalErrorMessage(isCorrectId, user);
-
-      if (typicalErrorMessage) {
-        proceedMessage(typicalErrorMessage);
-        return;
-      }
-
-      proceedMessage({ message: "User found", data: user });
-
-      break;
-    }
-
-    case "PUT": {
-      const result = await new Promise<TypicalMessage>((resolve, reject) => {
-        try {
-          let userData = "";
-
-          request.on("data", (chunk: string) => {
-            userData += chunk;
+      case "GET": {
+        if (!id) {
+          proceedMessage({
+            message: "Existing users",
+            data: Object.values(users),
           });
 
-          request.on("end", () => {
-            const isCorrectId = checkIsCorrectId(id);
-
-            const typicalErrorMessage = getTypicalErrorMessage(
-              isCorrectId,
-              user
-            );
-
-            if (typicalErrorMessage) {
-              resolve(typicalErrorMessage);
-              return;
-            }
-
-            const parsedData = parseJSON(userData);
-            const newUser = { ...user, ...parsedData };
-            const IsCorrectUser =
-              parsedData &&
-              checkIsCorrectUser(newUser) &&
-              !("id" in parsedData);
-
-            if (IsCorrectUser) {
-              users[id] = newUser;
-
-              resolve({
-                message: "User updated",
-                data: newUser,
-              });
-            } else {
-              resolve(wrongFormatPUT);
-            }
-          });
-        } catch {
-          reject(fail);
+          return;
         }
-      });
 
-      proceedMessage(result);
-      break;
-    }
+        const isCorrectId = checkIsCorrectId(id);
+        const typicalErrorMessage = getTypicalErrorMessage(isCorrectId, user);
 
-    case "DELETE": {
-      const isCorrectId = checkIsCorrectId(id);
-      const typicalErrorMessage = getTypicalErrorMessage(isCorrectId, user);
+        if (typicalErrorMessage) {
+          proceedMessage(typicalErrorMessage);
+          return;
+        }
 
-      if (typicalErrorMessage) {
-        proceedMessage(typicalErrorMessage);
-        return;
+        proceedMessage({ message: "User found", data: user });
+
+        break;
       }
 
-      delete users[id];
-      proceedMessage({ message: `User was deleted`, data: user });
+      case "PUT": {
+        const result = await new Promise<TypicalMessage>((resolve, reject) => {
+          try {
+            let userData = "";
 
-      break;
+            request.on("data", (chunk: string) => {
+              userData += chunk;
+            });
+
+            request.on("end", () => {
+              const isCorrectId = checkIsCorrectId(id);
+
+              const typicalErrorMessage = getTypicalErrorMessage(
+                isCorrectId,
+                user
+              );
+
+              if (typicalErrorMessage) {
+                resolve(typicalErrorMessage);
+                return;
+              }
+
+              const parsedData = parseJSON(userData);
+              const newUser = { ...user, ...parsedData };
+
+              const IsCorrectUser =
+                parsedData &&
+                checkIsCorrectUser(newUser) &&
+                !("id" in parsedData);
+
+              if (IsCorrectUser) {
+                users[id] = newUser;
+
+                resolve({
+                  message: "User updated",
+                  data: newUser,
+                });
+              } else {
+                resolve(wrongFormatPUT);
+              }
+            });
+          } catch {
+            reject(fail);
+          }
+        });
+
+        proceedMessage(result);
+        break;
+      }
+
+      case "DELETE": {
+        const isCorrectId = checkIsCorrectId(id);
+        const typicalErrorMessage = getTypicalErrorMessage(isCorrectId, user);
+
+        if (typicalErrorMessage) {
+          proceedMessage(typicalErrorMessage);
+          return;
+        }
+
+        delete users[id];
+        proceedMessage({ message: `User was deleted`, data: user, code: 204 });
+
+        break;
+      }
     }
-  }
 
-  response.end();
+    response.end();
+  } catch {
+    proceedMessage(fail);
+  }
 });
 
 server.listen(process.env.PORT, () =>
