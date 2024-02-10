@@ -81,6 +81,63 @@ const server = http.createServer(async (request, response) => {
     }
 
     case "PUT": {
+      const result = await new Promise<TypicalMessage>((resolve, reject) => {
+        try {
+          let userData = "";
+
+          request.on("data", (chunk: string) => {
+            userData += chunk;
+          });
+
+          request.on("end", () => {
+            const isCorrectId = checkIsCorrectId(id);
+
+            if (!isCorrectId) {
+              resolve({
+                message: "Invalid ID",
+                data: "You provided ID in incorrect format",
+                code: 400,
+              });
+
+              return;
+            }
+
+            if (!user) {
+              resolve({
+                message: "User not found",
+                data: "Check if passed ID is correct",
+                code: 400,
+              });
+
+              return;
+            }
+
+            const parsedData = parseJSON(userData);
+            const newUser = { ...user, ...parsedData };
+            const IsCorrectUser =
+              checkIsCorrectUser(newUser) && !("id" in parsedData);
+
+            if (IsCorrectUser) {
+              users[id] = newUser;
+
+              resolve({
+                message: "User updated",
+                data: newUser,
+              });
+            } else {
+              resolve({
+                message: "Wrong format",
+                data: "Correct format is: {username?: string; age?: number; hobbies?: Array<string>}",
+                code: 400,
+              });
+            }
+          });
+        } catch (e) {
+          reject({ message: "Operation failed", code: 500 });
+        }
+      });
+
+      sendMessage(response, result);
       break;
     }
 
@@ -89,7 +146,7 @@ const server = http.createServer(async (request, response) => {
 
       if (!isCorrectId) {
         sendMessage(response, {
-          message: "User not found",
+          message: "Invalid ID",
           data: "You provided ID in incorrect format",
           code: 400,
         });
