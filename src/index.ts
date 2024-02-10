@@ -1,20 +1,31 @@
 import "dotenv/config";
 import http from "node:http";
 import { users } from "./bd";
-import { baseURL } from "./constants";
+import {
+  baseURL,
+  fail,
+  wrongFormatPOST,
+  wrongFormatPUT,
+  wrongURL,
+} from "./constants";
 import { TypicalMessage } from "./types";
 import {
   checkIsCorrectId,
   checkIsCorrectUser,
   genereateId,
   getId,
+  getTypicalErrorMessage,
   parseJSON,
   sendMessage,
 } from "./utils";
 
 const server = http.createServer(async (request, response) => {
+  const proceedMessage = (message: TypicalMessage) => {
+    sendMessage(response, message);
+  };
+
   if (!request.url?.startsWith(baseURL)) {
-    sendMessage(response, { message: "URL not found", code: 404 });
+    proceedMessage(wrongURL);
 
     return;
   }
@@ -46,36 +57,37 @@ const server = http.createServer(async (request, response) => {
                 code: 201,
               });
             } else {
-              resolve({
-                message: "Wrong format",
-                data: "Correct format is: {username: string; age: number; hobbies?: Array<string>}",
-                code: 400,
-              });
+              resolve(wrongFormatPOST);
             }
           });
-        } catch (e) {
-          reject({ message: "Operation failed", code: 500 });
+        } catch {
+          reject(fail);
         }
       });
 
-      sendMessage(response, result);
+      proceedMessage(result);
       break;
     }
 
     case "GET": {
       if (!id) {
-        sendMessage(response, {
-          message: "All users",
+        proceedMessage({
+          message: "Existing users",
           data: Object.values(users),
         });
+
         return;
       }
 
-      if (user) {
-        sendMessage(response, { message: "User found", data: user });
-      } else {
-        sendMessage(response, { message: "User not found", code: 400 });
+      const isCorrectId = checkIsCorrectId(id);
+      const typicalErrorMessage = getTypicalErrorMessage(isCorrectId, user);
+
+      if (typicalErrorMessage) {
+        proceedMessage(typicalErrorMessage);
+        return;
       }
+
+      proceedMessage({ message: "User found", data: user });
 
       break;
     }
@@ -92,30 +104,22 @@ const server = http.createServer(async (request, response) => {
           request.on("end", () => {
             const isCorrectId = checkIsCorrectId(id);
 
-            if (!isCorrectId) {
-              resolve({
-                message: "Invalid ID",
-                data: "You provided ID in incorrect format",
-                code: 400,
-              });
+            const typicalErrorMessage = getTypicalErrorMessage(
+              isCorrectId,
+              user
+            );
 
-              return;
-            }
-
-            if (!user) {
-              resolve({
-                message: "User not found",
-                data: "Check if passed ID is correct",
-                code: 400,
-              });
-
+            if (typicalErrorMessage) {
+              resolve(typicalErrorMessage);
               return;
             }
 
             const parsedData = parseJSON(userData);
             const newUser = { ...user, ...parsedData };
             const IsCorrectUser =
-              checkIsCorrectUser(newUser) && !("id" in parsedData);
+              parsedData &&
+              checkIsCorrectUser(newUser) &&
+              !("id" in parsedData);
 
             if (IsCorrectUser) {
               users[id] = newUser;
@@ -125,47 +129,29 @@ const server = http.createServer(async (request, response) => {
                 data: newUser,
               });
             } else {
-              resolve({
-                message: "Wrong format",
-                data: "Correct format is: {username?: string; age?: number; hobbies?: Array<string>}",
-                code: 400,
-              });
+              resolve(wrongFormatPUT);
             }
           });
-        } catch (e) {
-          reject({ message: "Operation failed", code: 500 });
+        } catch {
+          reject(fail);
         }
       });
 
-      sendMessage(response, result);
+      proceedMessage(result);
       break;
     }
 
     case "DELETE": {
       const isCorrectId = checkIsCorrectId(id);
+      const typicalErrorMessage = getTypicalErrorMessage(isCorrectId, user);
 
-      if (!isCorrectId) {
-        sendMessage(response, {
-          message: "Invalid ID",
-          data: "You provided ID in incorrect format",
-          code: 400,
-        });
-
-        return;
-      }
-
-      if (!user) {
-        sendMessage(response, {
-          message: "User not found",
-          data: "Check if passed ID is correct",
-          code: 400,
-        });
-
+      if (typicalErrorMessage) {
+        proceedMessage(typicalErrorMessage);
         return;
       }
 
       delete users[id];
-      sendMessage(response, { message: `User was deleted`, data: user });
+      proceedMessage({ message: `User was deleted`, data: user });
 
       break;
     }

@@ -1,6 +1,6 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { v4, validate } from "uuid";
-import { baseURL } from "./constants";
+import { baseURL, invalidID, wrongID } from "./constants";
 import { TypicalMessage, User } from "./types";
 
 export const genereateId = v4;
@@ -14,6 +14,7 @@ export const sendMessage = (
   if (message.code) {
     response.writeHead(message.code);
   }
+
   response.end(JSON.stringify(message));
 };
 
@@ -64,4 +65,14 @@ export const checkIsCorrectId = (id: unknown) => {
     return false;
   }
   return validate(id);
+};
+
+export const getTypicalErrorMessage = (isCorrectId: boolean, user?: User) => {
+  if (!isCorrectId) {
+    return invalidID;
+  }
+
+  if (!user) {
+    return wrongID;
+  }
 };
