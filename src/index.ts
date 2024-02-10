@@ -10,7 +10,7 @@ import {
   sendMessage,
 } from "./utils";
 
-const server = http.createServer(function (request, response) {
+const server = http.createServer(async (request, response) => {
   if (!request.url?.startsWith(baseURL)) {
     response.writeHead(404);
     sendMessage(response, { message: "URL not found" });
@@ -23,32 +23,42 @@ const server = http.createServer(function (request, response) {
 
   switch (request.method) {
     case "POST": {
-      let userData = "";
+      const result = await new Promise<Record<string, unknown>>(
+        (resolve, reject) => {
+          try {
+            let userData = "";
 
-      request.on("data", (chunk: string) => {
-        userData += chunk;
-      });
-      request.on("end", () => {
-        const newId = genereateId();
-        const newUser = { ...parseJSON(userData), id: newId };
-        const IsCorrectUser = checkIsCorrectUser(newUser);
+            request.on("data", (chunk: string) => {
+              userData += chunk;
+            });
 
-        if (IsCorrectUser) {
-          users[newId] = newUser;
-          console.log(newId, newUser, users);
+            request.on("end", () => {
+              const newId = genereateId();
+              const newUser = { ...parseJSON(userData), id: newId };
+              const IsCorrectUser = checkIsCorrectUser(newUser);
 
-          sendMessage(response, {
-            message: "User added",
-            user: newUser,
-          });
-        } else {
-          sendMessage(response, {
-            message: "Wrong format",
-            description:
-              'Correct format is: {username: string, "age": number, hobbies?: Array<string>}',
-          });
+              if (IsCorrectUser) {
+                users[newId] = newUser;
+
+                resolve({
+                  message: "User added",
+                  user: newUser,
+                });
+              } else {
+                resolve({
+                  message: "Wrong format",
+                  description:
+                    "Correct format is: {username: string; age: number; hobbies?: Array<string>}",
+                });
+              }
+            });
+          } catch (e) {
+            reject({ message: "Operation failed" });
+          }
         }
-      });
+      );
+
+      sendMessage(response, result);
       break;
     }
 

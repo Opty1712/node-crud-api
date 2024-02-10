@@ -25,8 +25,13 @@ export const checkIsCorrectUser = (
 
   const age = "age" in value && value["age"];
   const username = "username" in value && value["username"];
+  const id = "id" in value && value["id"];
 
-  if (typeof username !== "string" || typeof age !== "number") {
+  if (
+    typeof username !== "string" ||
+    typeof id !== "string" ||
+    typeof age !== "number"
+  ) {
     return false;
   }
 
