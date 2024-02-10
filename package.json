@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/Opty1712/node-crud-api#readme",
   "dependencies": {
+    "@types/uuid": "^9.0.8",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.1",
     "eslint": "^8.56.0",
