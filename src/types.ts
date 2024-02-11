@@ -12,3 +12,9 @@ export type TypicalMessage = {
   data?: string | Record<string, unknown> | Array<unknown>;
   code?: number;
 };
+
+export type TypicalAnswer<T> = {
+  message: string;
+  data: T;
+  code?: number;
+};

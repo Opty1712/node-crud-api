@@ -64,6 +64,7 @@ export const checkIsCorrectId = (id: unknown) => {
   if (typeof id !== "string") {
     return false;
   }
+
   return validate(id);
 };
 
