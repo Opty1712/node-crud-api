@@ -1,7 +1,7 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { v4, validate } from "uuid";
 import { baseURL, invalidID, wrongID } from "./constants";
-import { TypicalMessage, User } from "./types";
+import { TypicalAnswer, TypicalMessage, User, UserToPut } from "./types";
 
 export const genereateId = v4;
 
@@ -11,11 +11,16 @@ export const sendMessage = (
   },
   message: TypicalMessage
 ) => {
-  if (message.code) {
-    response.writeHead(message.code);
-  }
+  try {
+    if (message.code) {
+      response.writeHead(message.code);
+    }
 
-  response.end(JSON.stringify(message));
+    response.write(JSON.stringify(message));
+    response.end();
+  } catch (e) {
+    console.error(e);
+  }
 };
 
 export const getId = (url: string) => url.replace(baseURL, "").replace("/", "");
@@ -41,12 +46,8 @@ export const checkIsCorrectUser = (
 
   const hobbies = "hobbies" in value && value["hobbies"];
 
-  if (!Array.isArray(hobbies)) {
-    return false;
-  }
-
-  if (hobbies.some((hobby) => typeof hobby !== "string")) {
-    return false;
+  if (Array.isArray(hobbies)) {
+    return hobbies.every((hobby) => typeof hobby === "string");
   }
 
   return true;
@@ -75,5 +76,29 @@ export const getTypicalErrorMessage = (isCorrectId: boolean, user?: User) => {
 
   if (!user) {
     return wrongID;
+  }
+};
+
+type FetchParams = {
+  url: string;
+  method?: "GET" | "POST" | "DELETE" | "PUT";
+  body?: User | UserToPut;
+};
+
+export const typedFetch = async <T>({
+  url,
+  method = "GET",
+  body,
+}: FetchParams) => {
+  try {
+    return (await fetch(url, { method, body: JSON.stringify(body) }).then(
+      (result) => result?.json()
+    )) as TypicalAnswer<T>;
+  } catch {
+    return Promise.resolve({
+      code: 500,
+      message: "Internal server error",
+      data: "",
+    }) as Promise<TypicalAnswer<T>>;
   }
 };

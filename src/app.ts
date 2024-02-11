@@ -49,9 +49,9 @@ export const getServer = () =>
                 request.on("end", () => {
                   const newId = genereateId();
                   const newUser = { ...parseJSON(userData), id: newId };
-                  const IsCorrectUser = checkIsCorrectUser(newUser);
+                  const isCorrectUser = checkIsCorrectUser(newUser);
 
-                  if (IsCorrectUser) {
+                  if (isCorrectUser) {
                     users[newId] = newUser;
 
                     resolve({
@@ -120,14 +120,12 @@ export const getServer = () =>
                   }
 
                   const parsedData = parseJSON(userData);
-                  const newUser = { ...user, ...parsedData };
+                  const newUser = { ...user, ...parsedData, id: user?.id };
 
-                  const IsCorrectUser =
-                    parsedData &&
-                    checkIsCorrectUser(newUser) &&
-                    !("id" in parsedData);
+                  const isCorrectUser =
+                    parsedData && checkIsCorrectUser(newUser);
 
-                  if (IsCorrectUser) {
+                  if (isCorrectUser) {
                     users[id] = newUser;
 
                     resolve({
