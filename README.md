@@ -6,6 +6,7 @@
 
 - Ensure you use **node 20** and run `npm i`
 - Run `npm run start:dev` for developing or `npm run start:prod` for production
+- Run `npm run test` for automated tests, covering 3 scenarios
 
 ### How to use
 
