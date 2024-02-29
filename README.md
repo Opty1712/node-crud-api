@@ -1,17 +1,32 @@
-# Assignment: CRUD API
+# CRUD API
 
-## Description
+## Solution
+
+### How to run
+
+- Ensure you use **node 20** and run `npm i`
+- Run `npm run start:dev` for developing or `npm run start:prod` for production
+- Run `npm run test` for automated tests, covering 3 scenarios
+
+### How to use
+
+- Use any client which can send http requests (I recommend [Postman](https://www.postman.com/))
+- Send data to API `http://localhost:4000/api/users`, variants are described below in the section [Implementation details](#details)
+
+## Assignment
+
+### Description
 
 Your task is to implement simple CRUD API using in-memory database underneath.
 
-## Technical requirements
+### Technical requirements
 
 - Task can be implemented on Javascript or Typescript
 - Only `nodemon`, `dotenv`, `cross-env`, `typescript`, `ts-node`, `ts-node-dev`, `eslint` and its plugins, `webpack-cli`, `webpack` and its plugins, `prettier`, `uuid`, `@types/*` as well as libraries used for testing are allowed
 - Use 20 LTS version of Node.js
 - Prefer asynchronous API whenever possible
 
-## Implementation details
+### <a name="details"></a> Implementation details
 
 1. Implemented endpoint `api/users`:
    - **GET** `api/users` is used to get all persons

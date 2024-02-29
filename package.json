@@ -1,20 +1,41 @@
 {
-  "name": "crud-api",
+  "name": "node-crud-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "cross-env NODE_ENV=development nodemon --exec ts-node src/index.ts",
+    "start:prod": "npm run build && node dist/index",
+    "build": "tsc --outDir dist src/index.ts",
+    "test": "jest --silent",
+    "test:watch": "jest --watch"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Opty1712/node-crud-api.git"
   },
-  "keywords": [],
-  "author": "",
+  "author": "opty1712",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Opty1712/node-crud-api/issues"
   },
-  "homepage": "https://github.com/Opty1712/node-crud-api#readme"
+  "homepage": "https://github.com/Opty1712/node-crud-api#readme",
+  "dependencies": {
+    "typescript": "^5.3.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.17",
+    "@types/uuid": "^9.0.8",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.1",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.3",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^9.1.1"
+  }
 }
